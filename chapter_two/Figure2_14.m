@@ -1,6 +1,6 @@
-clc;
-close all;
-clear all;
+clc
+close all
+clear all
 
 %% ≤Â÷µ∫À
 N = 40;

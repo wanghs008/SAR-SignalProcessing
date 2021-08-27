@@ -1,6 +1,6 @@
-clc;
-close all;
-clear all;
+clc
+close all
+clear all
 
 % LFM信号 实信号 s(t) = cos(2*pi*(f0.*t + 0.5*K*t.^2))
 % LFM信号 复信号 s(t) = exp(1i*2*pi*(f0.*t + 0.5*K*t.^2))

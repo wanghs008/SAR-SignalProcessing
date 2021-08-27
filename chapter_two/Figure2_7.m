@@ -1,6 +1,6 @@
-clc;
-close all;
-clear all;
+clc
+close all
+clear all
 
 T = 10e-3;
 F = 300;

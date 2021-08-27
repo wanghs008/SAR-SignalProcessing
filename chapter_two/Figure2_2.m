@@ -1,6 +1,6 @@
-clc;
-close all;
-clear all;
+clc
+close all
+clear all
 
 % 建立正方形矩阵
 M = 256;% 矩阵高度

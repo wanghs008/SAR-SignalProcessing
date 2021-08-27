@@ -1,6 +1,6 @@
-clc;
-close all;
-clear all;
+clc
+close all
+clear all
 
 % 矩形函数及其傅里叶变换
 dt1 = 0.01;
