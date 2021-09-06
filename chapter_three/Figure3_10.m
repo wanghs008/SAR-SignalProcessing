@@ -27,7 +27,7 @@ Window = fftshift(window);        % 频域窗
 % 信号变换
 st_window = window.*exp(1j*pi*K*t.^2);          % 加窗后的Chirp信号
 Hf_Window = Window.*Hf;                         % 加窗后的频域频谱滤波器
-Soutf_Window = Sf.*Hf_Window;                   % 加窗后的匹配滤波器输出
+Soutf_Window = Hf_Window.*Sf;                   % 加窗后的匹配滤波器输出
 % 绘图
 H = figure;
 set(H,'position',[500,500,600,300]);
