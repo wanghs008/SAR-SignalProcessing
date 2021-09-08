@@ -178,7 +178,15 @@ ISLR2 = zeros(1,N);                    % 初始化积分旁瓣比
 IRW3  = zeros(1,N);                    % 初始化冲激响应宽度
 PSLR3 = zeros(1,N);                    % 初始化峰值旁瓣比
 ISLR3 = zeros(1,N);                    % 初始化积分旁瓣比
+% 显示运行时间
+tic
+% 显示进度条框
+wait_title = waitbar(0,'Program Initializing ...');                                            
+% 绘图
+H8 = figure;
+set(H8,'position',[100,100,600,350]);
 % 循环计算
+pause(1);
 for i = 1:N
     % 变量设置
     B_dk = (K+dk(i))*T;
@@ -218,57 +226,82 @@ for i = 1:N
     % 参数计算-->ISLR
     [islr_dk_1] = get_islr(fftshift(soutt_dk_1_nor),5);
     ISLR1(i) = islr_dk_1;
-% 参数计算-->方式二                                        
-    Soutf_dk_2 = Srf.*Hf_dk_2;
-    soutt_dk_2 = ifft(ifftshift(Soutf_dk_2));          % 方式二匹配滤波结果 
-    soutt_dk_2_nor = abs(soutt_dk_2)./max(abs(soutt_dk_2));               % 归一化
-    soutt_dk_2_log = 20*log10(abs(soutt_dk_2)./max(abs(soutt_dk_2))+eps); % 对数化
-    % 参数计算-->IRW
-    [irw_dk_2,~,~] = get_irw(fftshift(soutt_dk_2_nor));
-    IRW2(i) = irw_dk_2;
-    % 参数计算-->PSLR
-    [pslr_dk_2] = get_pslr(fftshift(soutt_dk_2_log));
-    PSLR2(i) = pslr_dk_2;
-    % 参数计算-->ISLR
-    [islr_dk_2] = get_islr(fftshift(soutt_dk_2_nor),5);
-    ISLR2(i) = islr_dk_2;
-% 参数计算-->方式三                                         
-    Soutf_dk_3 = Srf.*Hf_dk_3;
-    soutt_dk_3 = ifft(ifftshift(Soutf_dk_3));          % 方式三匹配滤波结果 
-    soutt_dk_3_nor = abs(soutt_dk_3)./max(abs(soutt_dk_3));               % 归一化
-    soutt_dk_3_log = 20*log10(abs(soutt_dk_3)./max(abs(soutt_dk_3))+eps); % 对数化
-    % 参数计算-->IRW
-    [irw_dk_3,~,~] = get_irw(soutt_dk_3_nor);
-    IRW3(i) = irw_dk_3;
-    % 参数计算-->PSLR
-    [pslr_dk_3] = get_pslr(soutt_dk_3_log);
-    PSLR3(i) = pslr_dk_3;
-    % 参数计算-->ISLR
-    [islr_dk_3] = get_islr(soutt_dk_3_nor,5);
-    ISLR3(i) = islr_dk_3;
+     % 绘图
+    if i == 2990
+       figure(H8);
+       subplot(121),plot(fftshift(soutt_dk_1_log),'k')
+       axis([3600 4800,-25 -15])
+       title('(a)|QPE|略小于0.28\pi弧度'),xlabel('采样点序列'),ylabel('幅度/dB')
+    end
+    if i == 3100
+       figure(H8);
+       subplot(122),plot(fftshift(soutt_dk_1_log),'k')
+       axis([3600 4800,-25 -15])
+       title('(b)|QPE|略大于0.28\pi弧度'),xlabel('采样点序列'),ylabel('幅度/dB')
+       suptitle('图3.15 最大旁瓣位置不同，而脉冲响应相似时的情况')
+    end
+% % 参数计算-->方式二                                        
+%     Soutf_dk_2 = Srf.*Hf_dk_2;
+%     soutt_dk_2 = ifft(ifftshift(Soutf_dk_2));          % 方式二匹配滤波结果 
+%     soutt_dk_2_nor = abs(soutt_dk_2)./max(abs(soutt_dk_2));               % 归一化
+%     soutt_dk_2_log = 20*log10(abs(soutt_dk_2)./max(abs(soutt_dk_2))+eps); % 对数化
+%     % 参数计算-->IRW
+%     [irw_dk_2,~,~] = get_irw(fftshift(soutt_dk_2_nor));
+%     IRW2(i) = irw_dk_2;
+%     % 参数计算-->PSLR
+%     [pslr_dk_2] = get_pslr(fftshift(soutt_dk_2_log));
+%     PSLR2(i) = pslr_dk_2;
+%     % 参数计算-->ISLR
+%     [islr_dk_2] = get_islr(fftshift(soutt_dk_2_nor),5);
+%     ISLR2(i) = islr_dk_2;
+% % 参数计算-->方式三                                         
+%     Soutf_dk_3 = Srf.*Hf_dk_3;
+%     soutt_dk_3 = ifft(ifftshift(Soutf_dk_3));          % 方式三匹配滤波结果 
+%     soutt_dk_3_nor = abs(soutt_dk_3)./max(abs(soutt_dk_3));               % 归一化
+%     soutt_dk_3_log = 20*log10(abs(soutt_dk_3)./max(abs(soutt_dk_3))+eps); % 对数化
+%     % 参数计算-->IRW
+%     [irw_dk_3,~,~] = get_irw(soutt_dk_3_nor);
+%     IRW3(i) = irw_dk_3;
+%     % 参数计算-->PSLR
+%     [pslr_dk_3] = get_pslr(soutt_dk_3_log);
+%     PSLR3(i) = pslr_dk_3;
+%     % 参数计算-->ISLR
+%     [islr_dk_3] = get_islr(soutt_dk_3_nor,5);
+%     ISLR3(i) = islr_dk_3;           
+    % 进度内容
+    pause(0);
+    Time_Trans   = Time_Transform(toc);
+    Time_Disp    = Time_Display(Time_Trans);
+    Display_Data = num2str(roundn(i/N*100,-1));
+    Display_Str  = ['Computation Progress ... ',Display_Data,'%',' --- ',...
+                    'Using Time: ',Time_Disp];
+    waitbar(i/N,wait_title,Display_Str)
 end
-% 绘图
-H7 = figure;
-set(H7,'position',[50,50,900,900]);
-subplot(331),plot(QPE/pi,(IRW1-IRW1(1))/IRW1(1)*100,'k')
-title('(a)IRW'),xlabel('|QPE|(\pi弧度)'),ylabel('展宽百分比')
-subplot(332),plot(QPE/pi,PSLR1,'k')
-title('(b)PSLR'),xlabel('|QPE|(\pi弧度)'),ylabel('PSLR/dB')
-subplot(333),plot(QPE/pi,ISLR1,'k')
-title('(c)ISLR'),xlabel('|QPE|(\pi弧度)'),ylabel('ISLR/dB')
-subplot(334),plot(QPE/pi,(IRW2-IRW2(1))/IRW2(1)*100,'k')
-title('(a)IRW'),xlabel('|QPE|(\pi弧度)'),ylabel('展宽百分比')
-subplot(335),plot(QPE/pi,PSLR2,'k')
-title('(b)PSLR'),xlabel('|QPE|(\pi弧度)'),ylabel('PSLR/dB')
-subplot(336),plot(QPE/pi,ISLR2,'k')
-title('(c)ISLR'),xlabel('|QPE|(\pi弧度)'),ylabel('ISLR/dB')
-subplot(337),plot(QPE/pi,(IRW3-IRW3(1))/IRW3(1)*100,'k')
-title('(a)IRW'),xlabel('|QPE|(\pi弧度)'),ylabel('展宽百分比')
-subplot(338),plot(QPE/pi,PSLR3,'k')
-title('(b)PSLR'),xlabel('|QPE|(\pi弧度)'),ylabel('PSLR/dB')
-subplot(339),plot(QPE/pi,ISLR3,'k')
-title('(c)ISLR'),xlabel('|QPE|(\pi弧度)'),ylabel('ISLR/dB')
-suptitle('图3.14 当\beta=2.5时的IRW、PSLR、ISLR与QPE之间的关系')
+pause(1);
+close(wait_title);
+toc
+% % 绘图
+% H7 = figure;
+% set(H7,'position',[50,50,900,900]);
+% subplot(331),plot(QPE/pi,(IRW1-IRW1(1))/IRW1(1)*100,'k')
+% title('(a)IRW'),xlabel('|QPE|(\pi弧度)'),ylabel('展宽百分比')
+% subplot(332),plot(QPE/pi,PSLR1,'k')
+% title('(b)PSLR'),xlabel('|QPE|(\pi弧度)'),ylabel('PSLR/dB')
+% subplot(333),plot(QPE/pi,ISLR1,'k')
+% title('(c)ISLR'),xlabel('|QPE|(\pi弧度)'),ylabel('ISLR/dB')
+% subplot(334),plot(QPE/pi,(IRW2-IRW2(1))/IRW2(1)*100,'k')
+% title('(a)IRW'),xlabel('|QPE|(\pi弧度)'),ylabel('展宽百分比')
+% subplot(335),plot(QPE/pi,PSLR2,'k')
+% title('(b)PSLR'),xlabel('|QPE|(\pi弧度)'),ylabel('PSLR/dB')
+% subplot(336),plot(QPE/pi,ISLR2,'k')
+% title('(c)ISLR'),xlabel('|QPE|(\pi弧度)'),ylabel('ISLR/dB')
+% subplot(337),plot(QPE/pi,(IRW3-IRW3(1))/IRW3(1)*100,'k')
+% title('(a)IRW'),xlabel('|QPE|(\pi弧度)'),ylabel('展宽百分比')
+% subplot(338),plot(QPE/pi,PSLR3,'k')
+% title('(b)PSLR'),xlabel('|QPE|(\pi弧度)'),ylabel('PSLR/dB')
+% subplot(339),plot(QPE/pi,ISLR3,'k')
+% title('(c)ISLR'),xlabel('|QPE|(\pi弧度)'),ylabel('ISLR/dB')
+% suptitle('当\beta=2.5时的IRW、PSLR、ISLR与QPE之间的关系')
 %% 提取冲击响应宽度
 function [irw,locleft,locright] = get_irw(Af)
     % 找到Af的最大位置
@@ -305,4 +338,33 @@ function [islr] = get_islr(Af,Nr)
     P_main = sum(Af(locleft:locright).^2);
     % 一维积分旁瓣比
     islr = 10*log10((P_total-P_main)./P_main);
+end
+%% 时间转换函数
+function y = Time_Transform(u)
+    Time_in = u(1);
+    Hours   = fix(Time_in/3600);
+    Minutes = fix((Time_in-Hours*3600)/60);
+    Seconds = fix(Time_in-Hours*3600-Minutes*60);
+    Time_out = [Hours Minutes Seconds];
+    y = Time_out;
+end
+%% 时间显示函数
+function y = Time_Display(u)
+    Hours   = u(1);
+    Minutes = u(2);
+    Seconds = u(3);
+    
+    if Hours == 0
+        if Minutes == 0
+            Time_out = [num2str(Seconds),'','s'];
+        else
+            Time_out = [num2str(Minutes),'','m','',...
+                            num2str(Seconds),'','s'];
+        end 
+    else
+        Time_out = [num2str(  Hours),'','h','',...
+                        num2str(Minutes),'','m','',...
+                        num2str(Seconds),'','s'];
+    end
+    y = Time_out;
 end
