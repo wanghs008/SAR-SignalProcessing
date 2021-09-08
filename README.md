@@ -52,7 +52,7 @@
     
     * Figure3.13 通过压缩目标的位置来说明基带信号的弃置区和TA值
 
-    * Figure3.14 当\beta=2.5时的IRW、PSLR、ISLR与QPE之间的关系(结果并不吻合)
+    * ~~Figure3.14 当$\beta=2.5$时的IRW、PSLR、ISLR与QPE之间的关系(结果并不吻合)~~
 
     * Figure3.15 旁瓣位置不同，而脉冲响应相似时的情况
 
