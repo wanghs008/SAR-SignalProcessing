@@ -275,6 +275,7 @@ for i = 1:N
     Display_Data = num2str(roundn(i/N*100,-1));
     Display_Str  = ['Computation Progress ... ',Display_Data,'%',' --- ',...
                     'Using Time: ',Time_Disp];
+
     waitbar(i/N,wait_title,Display_Str)
 end
 pause(1);
