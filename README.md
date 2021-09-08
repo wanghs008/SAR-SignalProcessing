@@ -22,7 +22,7 @@
 
     * Figure2.14 使用sinc函数插值的图
 
-    * FIgure2.15 Kaiser窗加权后的sinc函数，$bate=2.5$
+    * FIgure2.15 Kaiser窗加权后的sinc函数，$beta=2.5$
 
 * Chapter_Three
  
