@@ -10,22 +10,22 @@ Ka = 2095;                              % 方位向调频率
 theta_r_c = -0.3*pi/180;                % 斜视角
 % 参数计算
 Delta_f_dop = abs(Ka*Ta);               % 方位信号带宽
-eta_c = -R_eta_c*sin(theta_r_c)/Vr;     % 波束中心穿越时刻
+t_eta_c = -R_eta_c*sin(theta_r_c)/Vr;   % 波束中心穿越时刻
 % 参数设置
 alpha_a_s = 1;                          % 方位过采样率
 Fa = alpha_a_s*Delta_f_dop;             % 方位采样频率PRF
-N = 2*ceil(Fa*Ta/2);                    % 方位采样点数
-dt = Ta/N;                              % 采样时间间隔
-df = Fa/N;                              % 采样频率间隔 
+Na = 2*ceil(Fa*Ta/2);                   % 方位采样点数
+dt = Ta/Na;                             % 采样时间间隔
+df = Fa/Na;                             % 采样频率间隔 
 % 变量设置
-eta =  (-Ta/2:dt:Ta/2-dt) + eta_c;      % 方位时间变量
+t_eta =  (-Ta/2:dt:Ta/2-dt) + t_eta_c;  % 方位时间变量
 % 信号表达
 R_eta = R_eta_c -...
-        Vr*sin(theta_r_c)*(eta-eta_c) +...
-        (1/2)*(Vr^2*cos(theta_r_c)^2/R_eta_c)*(eta-eta_c).^2;       % 瞬时斜距展开式
+        Vr*sin(theta_r_c)*(t_eta-t_eta_c) +...
+        (1/2)*(Vr^2*cos(theta_r_c)^2/R_eta_c)*(t_eta-t_eta_c).^2;   % 瞬时斜距展开式
 %{
-R_eta = sqrt(R0^2 + Vr^2*eta^2) % 瞬时斜距的双曲线形式
-R_eta = R0 + Vr^2*eta^2/(2*R0)  % 瞬时斜距的抛物线形式 
+R_eta = sqrt(R0^2 + Vr^2*eta^2) % 瞬时斜距的双曲线形式                        
+R_eta = R0 + Vr^2*eta^2/(2*R0)  % 瞬时斜距的抛物线形式                
 R_eta = R_eta_c -...
         Vr^2*eta_c/R_eta_c*(eta-eta_c) +...
         (1/2)*(Vr^2*cos(theta_r_c)^2/R_eta_c)*(eta-eta_c).^2;
@@ -33,15 +33,16 @@ R_eta = R_eta_c -...
         Vr*sin(theta_r_c)*(eta-eta_c) +...
         (1/2)*(Vr^2*cos(theta_r_c)^2/R_eta_c)*(eta-eta_c).^2;
 %}
-RCM_1 = -Vr*sin(theta_r_c)*(eta-eta_c+Ta/2);                        % 距离徙动线性分量
-RCM_2 = (1/2)*(Vr^2*cos(theta_r_c)^2/R_eta_c)*(eta-eta_c).^2;       % 距离徙动二次分量
+RCM_1 = -Vr*sin(theta_r_c)*(t_eta-t_eta_c+Ta/2);                    % 距离徙动线性分量
+RCM_2 = (1/2)*(Vr^2*cos(theta_r_c)^2/R_eta_c)*(t_eta-t_eta_c).^2;   % 距离徙动二次分量
 RCM_all = RCM_1 + RCM_2;                                            % 距离徙动总量
-% 绘图
+% 绘图                                                                
 H = figure();
 set(H,'position',[100,100,800,600]);
-plot(RCM_1,eta,'k--','LineWidth',2),set(gca,'ydir','reverse'),hold on
-plot(RCM_all,eta,'r','LineWidth',2)
+plot(RCM_1,t_eta,'k--','LineWidth',2),hold on
+plot(RCM_all,t_eta,'r','LineWidth',2),set(gca,'ydir','reverse')
 axis([-5 35 0 1.2])
+xlabel('距离徙动(m)'),ylabel('方位时间(s)')
 line([0,0],[0,1.2],'Color','r','LineStyle','--')
 line([3,3],[0,1.2],'Color','r','LineStyle','--')
 arrow([3,0.2],[27,0.2],'Color','k','Linewidth',1);
