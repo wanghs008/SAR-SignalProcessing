@@ -15,5 +15,5 @@ axis([-8 8,-0.4 1.2])
 grid on
 
 legend('boxoff');
-lgd = legend([p1,p2],{'加权','未经加权'},'FontSize',8,'TextColor','k','Location','northeast','NumColumns',1);
+lgd = legend([p1,p2],{'未经加权','经过加权'},'FontSize',8,'TextColor','k','Location','northeast','NumColumns',1);
 % title(lgd,'My Legend Title')

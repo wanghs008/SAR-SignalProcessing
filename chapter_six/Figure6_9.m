@@ -99,7 +99,7 @@ f_eta = f_eta - round((f_eta-f_eta_c(1))/Fa)*Fa;        % ·½Î»ÆµÂÊ±äÁ¿(¿É¹Û²âÆµÂ
 [r_tauX,f_etaY] = meshgrid(r_tau,f_eta);                % ÉèÖÃ¾àÀëÊ±Óò-·½Î»ÆµÓò¶şÎ¬ÍøÂç×ø±ê
 %  ÒÔ¾àÀëÆµÂÊÎªXÖá£¬·½Î»ÆµÂÊÎªYÖá                                                                                                            
 [f_tau_X,f_eta_Y] = meshgrid(f_tau,f_eta);              % ÉèÖÃÆµÂÊÊ±Óò-·½Î»ÆµÓò¶şÎ¬ÍøÂç×ø±ê
-%% ĞÅºÅÉèÖÃ--¡·Ô­Ê¼»Ø²¨ĞÅºÅ     
+%% ĞÅºÅÉèÖÃ--¡·Ô­Ê¼»Ø²¨ĞÅºÅ  
 tic
 wait_title = waitbar(0,'¿ªÊ¼Éú³ÉÀ×´ïÔ­Ê¼»Ø²¨Êı¾İ ...');  
 pause(1);
@@ -163,27 +163,74 @@ Soutf_2 = Srf.*Hrf_2;
 soutt_2 = ifft(Soutf_2,Nrg,2);
 Soutf_3 = Srf.*Hrf_3;
 soutt_3 = ifft(Soutf_3,Nrg,2);
+%% ĞÅºÅÉèÖÃ--¡··½Î»Ïò¸µÀïÒ¶±ä»»
+Srdf_1 = fft(soutt_1,Naz,1);
+Srdf_2 = fft(soutt_2,Naz,1);
+Srdf_3 = fft(soutt_3,Naz,1);
+%% ĞÅºÅÉèÖÃ--¡·¾àÀëáã¶¯Ğ£Õı
+RCM = lambda^2*r_tauX.*f_etaY.^2/(8*Vr^2);              % ĞèÒªĞ£ÕıµÄ¾àÀëáã¶¯Á¿
+RCM = RCM - (R_eta_c - R0);                             % ½«¾àÀëáã¶¯Á¿×ª»»µ½Ô­Í¼Ïñ×ø±êÏµÖĞ
+RCM = RCM/rho_r;                                        % ½«¾àÀëáã¶¯Á¿×ª»»Îª¾àÀëµ¥ÔªÆ«ÒÆÁ¿
+%  ¼ÆËã²åÖµÏµÊı±í
+x_tmp = repmat(-4:3,[16,1]);                            % ²åÖµ³¤¶È                          
+x_tmp = x_tmp + repmat(((1:16)/16).',[1,8]);            % Á¿»¯Î»ÒÆ
+hx = sinc(x_tmp);                                       % Éú³É²åÖµºË
+kwin = repmat(kaiser(8,2.5).',[16,1]);                  % ¼Ó´°
+hx = kwin.*hx;
+hx = hx./repmat(sum(hx,2),[1,8]);                       % ºËµÄ¹éÒ»»¯
+%  ²åÖµĞ£Õı
+tic
+wait_title = waitbar(0,'¿ªÊ¼½øĞĞ¾àÀëáã¶¯Ğ£Õı ...');  
+pause(1);
+Srdf_rcm_1 = zeros(Naz,Nrg);
+Srdf_rcm_2 = zeros(Naz,Nrg);
+Srdf_rcm_3 = zeros(Naz,Nrg);
+for i = 1 : Naz
+    for j = 1 : Nrg
+        offset_int = ceil(RCM(i,j));
+        offset_frac = round((offset_int - RCM(i,j)) * 16);
+        if offset_frac == 0
+           Srdf_rcm_1(i,j) = Srdf_1(i,ceil(mod(j+offset_int-0.1,Nrg))); 
+           Srdf_rcm_2(i,j) = Srdf_2(i,ceil(mod(j+offset_int-0.1,Nrg))); 
+           Srdf_rcm_3(i,j) = Srdf_3(i,ceil(mod(j+offset_int-0.1,Nrg)));
+        else
+           Srdf_rcm_1(i,j) = Srdf_1(i,ceil(mod((j+offset_int-4:j+offset_int+3)-0.1,Nrg)))*hx(offset_frac,:).';
+           Srdf_rcm_2(i,j) = Srdf_2(i,ceil(mod((j+offset_int-4:j+offset_int+3)-0.1,Nrg)))*hx(offset_frac,:).';
+           Srdf_rcm_3(i,j) = Srdf_3(i,ceil(mod((j+offset_int-4:j+offset_int+3)-0.1,Nrg)))*hx(offset_frac,:).';
+        end
+    end
+    
+    pause(0.001);
+    Time_Trans   = Time_Transform(toc);
+    Time_Disp    = Time_Display(Time_Trans);
+    Display_Data = num2str(roundn(i/Naz*100,-1));
+    Display_Str  = ['Computation Progress ... ',Display_Data,'%',' --- ',...
+                    'Using Time: ',Time_Disp];
+    waitbar(i/Naz,wait_title,Display_Str)
+           
+end
+pause(1);
+close(wait_title);
+toc
 %  »æÍ¼
 H = figure();
-set(H,'position',[50,50,600,900]); 
-subplot(321),imagesc(real(soutt_1))
+set(H,'position',[100,100,600,900]); 
+subplot(321),imagesc(real(Srdf_rcm_1)),set(gca,'YDir','normal')
 %  axis([0 Naz,0 Nrg])
-xlabel('¾àÀëÊ±¼ä(²ÉÑùµã)¡ú'),ylabel('¡û·½Î»Ê±¼ä(²ÉÑùµã)'),title('(a)Êµ²¿')
-subplot(322),imagesc( abs(soutt_1))
+xlabel('¾àÀëÊ±¼ä(²ÉÑùµã)¡ú'),ylabel('·½Î»ÆµÂÊ(²ÉÑùµã)¡ú'),title('(a)Êµ²¿')
+subplot(322),imagesc( abs(Srdf_rcm_1)),set(gca,'YDir','normal')
 %  axis([0 Naz,0 Nrg])
-xlabel('¾àÀëÊ±¼ä(²ÉÑùµã)¡ú'),ylabel('¡û·½Î»Ê±¼ä(²ÉÑùµã)'),title('(b)·ù¶È')
-%  sgtitle('Í¼6.4 ¾àÀëÑ¹ËõºóµÄ·ÂÕæ½á¹û','Fontsize',16,'color','k')
-subplot(323),imagesc(real(soutt_2))
+xlabel('¾àÀëÊ±¼ä(²ÉÑùµã)¡ú'),ylabel('·½Î»ÆµÂÊ(²ÉÑùµã)¡ú'),title('(b)·ù¶È')
+subplot(323),imagesc(real(Srdf_rcm_2)),set(gca,'YDir','normal')
 %  axis([0 Naz,0 Nrg])
-xlabel('¾àÀëÊ±¼ä(²ÉÑùµã)¡ú'),ylabel('¡û·½Î»Ê±¼ä(²ÉÑùµã)'),title('(a)Êµ²¿')
-subplot(324),imagesc( abs(soutt_2))
+xlabel('¾àÀëÊ±¼ä(²ÉÑùµã)¡ú'),ylabel('·½Î»ÆµÂÊ(²ÉÑùµã)¡ú'),title('(a)Êµ²¿')
+subplot(324),imagesc( abs(Srdf_rcm_2)),set(gca,'YDir','normal')
 %  axis([0 Naz,0 Nrg])
-xlabel('¾àÀëÊ±¼ä(²ÉÑùµã)¡ú'),ylabel('¡û·½Î»Ê±¼ä(²ÉÑùµã)'),title('(b)·ù¶È')
-%  sgtitle('Í¼6.4 ¾àÀëÑ¹ËõºóµÄ·ÂÕæ½á¹û','Fontsize',16,'color','k')
-subplot(325),imagesc(real(soutt_3))
+xlabel('¾àÀëÊ±¼ä(²ÉÑùµã)¡ú'),ylabel('·½Î»ÆµÂÊ(²ÉÑùµã)¡ú'),title('(b)·ù¶È')
+subplot(325),imagesc(real(Srdf_rcm_3)),set(gca,'YDir','normal')
 %  axis([0 Naz,0 Nrg])
-xlabel('¾àÀëÊ±¼ä(²ÉÑùµã)¡ú'),ylabel('¡û·½Î»Ê±¼ä(²ÉÑùµã)'),title('(a)Êµ²¿')
-subplot(326),imagesc( abs(soutt_3))
+xlabel('¾àÀëÊ±¼ä(²ÉÑùµã)¡ú'),ylabel('·½Î»ÆµÂÊ(²ÉÑùµã)¡ú'),title('(a)Êµ²¿')
+subplot(326),imagesc( abs(Srdf_rcm_3)),set(gca,'YDir','normal')
 %  axis([0 Naz,0 Nrg])
-xlabel('¾àÀëÊ±¼ä(²ÉÑùµã)¡ú'),ylabel('¡û·½Î»Ê±¼ä(²ÉÑùµã)'),title('(b)·ù¶È')
-sgtitle('Í¼6.4 ¾àÀëÑ¹ËõºóµÄ·ÂÕæ½á¹û','Fontsize',16,'color','k')
+xlabel('¾àÀëÊ±¼ä(²ÉÑùµã)¡ú'),ylabel('·½Î»ÆµÂÊ(²ÉÑùµã)¡ú'),title('(b)·ù¶È')
+sgtitle('Í¼6.9 ¾àÀëáã¶¯Ğ£ÕıºóµÄ·ÂÕæÊı¾İ','Fontsize',16,'color','k')

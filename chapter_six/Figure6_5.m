@@ -21,12 +21,15 @@ f0 = 5.3e+9;                    % 雷达工作频率
 Delta_f_dop = 80;               % 多普勒带宽
 alpha_os_a = 1.25;              % 方位过采样率
 Naz = 256;                      % 距离线数
-theta_r_c = [3.5,21.9]*pi/180;  % 波束斜视角
+theta_r_c = [+3.5,+21.9]*pi/180;% 波束斜视角
 t_eta_c = [-8.1,-49.7];         % 波束中心穿越时刻
 %{
 t_eta_c = -R_eta_c*sin(theta_r_c(2))/Vr
 %}
-f_eta_c = [320,1975];           % 多普勒中心频率
+f_eta_c = [+320,+1975];         % 多普勒中心频率
+%{
+f_eta_c = 2*Vr*sin(theta_r_c(1))/lambda
+%}
 %  计算参数--》方位向参数
 lambda = c/f0;                  % 雷达工作波长
 La = 0.886*2*Vs*cos(theta_r_c(1))/Delta_f_dop;               
@@ -45,19 +48,19 @@ Trg = Nrg/Fr;                   % 发射脉冲时宽
 Taz = Naz/Fa;                   % 目标照射时间
 d_t_tau = 1/Fr;                 % 距离采样时间间隔
 d_t_eta = 1/Fa;                 % 方位采样时间间隔
-d_f_tau = Fa/Nrg;               % 距离采样频率间隔    
+d_f_tau = Fr/Nrg;               % 距离采样频率间隔    
 d_f_eta = Fa/Naz;               % 方位采样频率间隔
-%  目标参数
+%% 目标设置
 %  设置目标点相对于景中心之间的距离
 A_r =   0; A_a =   0;                                   % A点位置
 B_r = -50; B_a = -50;                                   % B点位置
 C_r = -50; C_a = +50;                                   % C点位置
 D_r = +50; D_a = C_a + (D_r-C_r)*tan(theta_r_c(1));     % D点位置
 %  得到目标点相对于景中心的位置坐标
-A_x = R0 + A_r; A_Y = A_a;                              % A点位置
-B_x = R0 + B_r; B_Y = B_a;                              % B点位置
-C_x = R0 + C_r; C_Y = C_a;                              % C点位置
-D_x = R0 + D_r; D_Y = D_a;                              % D点位置
+A_x = R0 + A_r; A_Y = A_a;                              % A点坐标
+B_x = R0 + B_r; B_Y = B_a;                              % B点坐标
+C_x = R0 + C_r; C_Y = C_a;                              % C点坐标
+D_x = R0 + D_r; D_Y = D_a;                              % D点坐标
 NPosition = [A_x,A_Y;
              B_x,B_Y;
              C_x,C_Y;
@@ -82,8 +85,20 @@ end
 %  时间变量 以景中心的零多普勒时刻作为方位向零点
 t_tau = (-Trg/2:d_t_tau:Trg/2-d_t_tau) + 2*R_eta_c/c;   % 距离时间变量
 t_eta = (-Taz/2:d_t_eta:Taz/2-d_t_eta) + t_eta_c(1);    % 方位时间变量
-%  坐标设置 以距离时间为X轴，方位时间为Y轴 
+%  长度变量
+r_tau = (t_tau*c/2)*cos(theta_r_c(1));                  % 距离长度变量                                                     
+%  频率变量 
+f_tau = fftshift(-Fr/2:d_f_tau:Fr/2-d_f_tau);           % 距离频率变量
+f_tau = f_tau - round((f_tau-0)/Fr)*Fr;                 % 距离频率变量(可观测频率)                          
+f_eta = fftshift(-Fa/2:d_f_eta:Fa/2-d_f_eta);           % 方位频率变量
+f_eta = f_eta - round((f_eta-f_eta_c(1))/Fa)*Fa;        % 方位频率变量(可观测频率)
+%% 坐标设置     
+%  以距离时间为X轴，方位时间为Y轴
 [t_tauX,t_etaY] = meshgrid(t_tau,t_eta);                % 设置距离时域-方位时域二维网络坐标
+%  以距离长度为X轴，方位频率为Y轴                                                                                                            
+[r_tauX,f_etaY] = meshgrid(r_tau,f_eta);                % 设置距离时域-方位频域二维网络坐标
+%  以距离频率为X轴，方位频率为Y轴                                                                                                            
+[f_tau_X,f_eta_Y] = meshgrid(f_tau,f_eta);              % 设置频率时域-方位频域二维网络坐标
 %% 信号设置--》原始回波信号  
 tic
 wait_title = waitbar(0,'开始生成雷达原始回波数据 ...');  
@@ -120,9 +135,6 @@ toc
 %  变量设置
 dt = Tr/Nr;                                             % 脉冲时间间隔
 ttau = -Tr/2:dt:Tr/2-dt;                                % 脉冲时间变量
-df = Fr/Nrg;                                            % 脉冲频率间隔
-ftau = ifftshift(-Fr/2:df:Fr/2-df);                     % 脉冲频率变量
-ftau = ftau - round(ftau/Fr)*Fr;                        % 脉冲频率变量(可观测频率)
 %  计算滤波器
 %  信号变换-->方式一：复制脉冲，时间反褶后取复共轭，补零DFT得到频域匹配滤波器
 %  加窗函数
@@ -132,15 +144,17 @@ hrt_1 = (abs(ttau)<=Tr/2).*exp(+1j*pi*Kr*ttau.^2);      % 复制脉冲
 hrt_window_1 = Window_1.*hrt_1;                         % 加窗
 Hrf_1 = repmat(fft(conj(fliplr(hrt_window_1)),Nrg,2),[Naz,1]);                        
 %  信号变换-->方式二：复制脉冲，补零DFT，取复共轭得到频域匹配滤波器无时间反褶
+%  加窗函数
 window_2 = kaiser(Nr,2.5)';                             % 时域窗
 Window_2 = fftshift(window_2);                          % 频域窗
 hrt_2 = (abs(ttau)<=Tr/2).*exp(+1j*pi*Kr*ttau.^2);      % 复制脉冲
 hrt_window_2 = Window_2.*hrt_2;                         % 加窗
 Hrf_2 = repmat(conj(fft(hrt_window_2,Nrg,2)),[Naz,1]);                   
 %  信号变换-->方式三：根据脉冲频谱特性直接在频域生成品与匹配滤波器
+%  加窗函数
 window_3 = kaiser(Nrg,2.5)';                            % 时域窗
 Window_3 = fftshift(window_3);                          % 频域窗
-Hrf_3 = (abs(ftau)<=Bw/2).*Window_3.*exp(+1j*pi*ftau.^2/Kr);  
+Hrf_3 = (abs(f_tau_X)<=Bw/2).*Window_3.*exp(+1j*pi*f_tau_X.^2/Kr);  
 %  匹配滤波
 Srf = fft(srt,Nrg,2);
 Soutf_1 = Srf.*Hrf_1;
@@ -157,23 +171,23 @@ Srdf_3 = fft(soutt_3,Naz,1);
 H = figure();
 set(H,'position',[50,50,600,900]); 
 subplot(321),imagesc(real(Srdf_1)),set(gca,'YDir','normal')
-%  axis([10 150,0 256])
-xlabel('距离向(采样点)→'),ylabel('方位向(采样点)→'),title('(a)实部')
+%  axis([0 Naz,0 Nrg])
+xlabel('距离时间(采样点)→'),ylabel('方位频率(采样点)→'),title('(a)实部')
 subplot(322),imagesc( abs(Srdf_1)),set(gca,'YDir','normal')
-%  axis([10 150,0 256])
-xlabel('距离向(采样点)→'),ylabel('方位向(采样点)→'),title('(b)幅度')
-%  sgtitle('图6.5 方式一得到方位向快速傅里叶变换','Fontsize',16,'color','k')
+%  axis([0 Naz,0 Nrg])
+xlabel('距离时间(采样点)→'),ylabel('方位频率(采样点)→'),title('(b)幅度')
+%  sgtitle('图6.5 方位向快速傅里叶变换后的仿真结果','Fontsize',16,'color','k')
 subplot(323),imagesc(real(Srdf_2)),set(gca,'YDir','normal')
-%  axis([10 150,0 256])
-xlabel('距离向(采样点)→'),ylabel('方位向(采样点)→'),title('(a)实部')
+%  axis([0 Naz,0 Nrg])
+xlabel('距离时间(采样点)→'),ylabel('方位频率(采样点)→'),title('(a)实部')
 subplot(324),imagesc( abs(Srdf_2)),set(gca,'YDir','normal')
-%  axis([10 150,0 256])
-xlabel('距离向(采样点)→'),ylabel('方位向(采样点)→'),title('(b)幅度')
-%  sgtitle('图6.5 方式二得到方位向快速傅里叶变换','Fontsize',16,'color','k') 
+%  axis([0 Naz,0 Nrg])
+xlabel('距离时间(采样点)→'),ylabel('方位频率(采样点)→'),title('(b)幅度')
+%  sgtitle('图6.5 方位向快速傅里叶变换后的仿真结果','Fontsize',16,'color','k') 
 subplot(325),imagesc(real(Srdf_3)),set(gca,'YDir','normal')
-%  axis([10 150,0 256])
-xlabel('距离向(采样点)→'),ylabel('方位向(采样点)→'),title('(a)实部')
+%  axis([0 Naz,0 Nrg])
+xlabel('距离时间(采样点)→'),ylabel('方位频率(采样点)→'),title('(a)实部')
 subplot(326),imagesc( abs(Srdf_3)),set(gca,'YDir','normal')
-%  axis([10 150,0 256])
-xlabel('距离向(采样点)→'),ylabel('方位向(采样点)→'),title('(b)幅度')
-sgtitle('图6.5 方位向快速傅里叶变换','Fontsize',16,'color','k')
+%  axis([0 Naz,0 Nrg])
+xlabel('距离时间(采样点)→'),ylabel('方位频率(采样点)→'),title('(b)幅度')
+sgtitle('图6.5 方位向快速傅里叶变换后的仿真结果','Fontsize',16,'color','k')
