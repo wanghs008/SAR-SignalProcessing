@@ -22,7 +22,7 @@ Delta_f_dop = 80;               % 多普勒带宽
 alpha_os_a = 1.25;              % 方位过采样率
 Naz = 256;                      % 距离线数
 theta_r_c = [+3.5,+21.9]*pi/180;% 波束斜视角
-t_eta_c = [-8.1,-49.7];         % 波束中心穿越时刻
+t_eta_c = [-8.1,-49.7];         % 景中心波束中心穿越时刻
 %{
 t_eta_c = -R_eta_c*sin(theta_r_c(2))/Vr
 %}
@@ -37,7 +37,7 @@ La = 0.886*2*Vs*cos(theta_r_c(1))/Delta_f_dop;
 Fa = alpha_os_a*Delta_f_dop;    % 方位向采样率
 Ta = 0.886*lambda*R_eta_c/(La*Vg*cos(theta_r_c(1)));
                                 % 目标照射时间
-R0 = R_eta_c*cos(theta_r_c(1)); % 最短斜距
+R0 = R_eta_c*cos(theta_r_c(1)); % 景中心最短斜距
 Ka = 2*Vr^2*cos(theta_r_c(1))^2/lambda/R0;              
                                 % 方位向调频率
 theta_bw = 0.886*lambda/La;     % 方位向3dB波束宽度
@@ -150,7 +150,7 @@ Window_2 = fftshift(window_2);                          % 频域窗
 hrt_2 = (abs(ttau)<=Tr/2).*exp(+1j*pi*Kr*ttau.^2);      % 复制脉冲
 hrt_window_2 = Window_2.*hrt_2;                         % 加窗
 Hrf_2 = repmat(conj(fft(hrt_window_2,Nrg,2)),[Naz,1]);                   
-%  信号变换-->方式三：根据脉冲频谱特性直接在频域生成品与匹配滤波器
+%  信号变换-->方式三：根据脉冲频谱特性直接在频域生成频域匹配滤波器
 %  加窗函数
 window_3 = kaiser(Nrg,2.5)';                            % 时域窗
 Window_3 = fftshift(window_3);                          % 频域窗
@@ -167,7 +167,7 @@ soutt_3 = ifft(Soutf_3,Nrg,2);
 Srdf_1 = fft(soutt_1,Naz,1);
 Srdf_2 = fft(soutt_2,Naz,1);
 Srdf_3 = fft(soutt_3,Naz,1);
-%  绘图
+%% 绘图
 H = figure();
 set(H,'position',[50,50,600,900]); 
 subplot(321),imagesc(real(Srdf_1)),set(gca,'YDir','normal')

@@ -22,7 +22,7 @@ Delta_f_dop = 80;               % 多普勒带宽
 alpha_os_a = 1.25;              % 方位过采样率
 Naz = 256;                      % 距离线数
 theta_r_c = [+3.5,+21.9]*pi/180;% 波束斜视角
-t_eta_c = [-8.1,-49.7];         % 波束中心穿越时刻
+t_eta_c = [-8.1,-49.7];         % 景中心波束中心穿越时刻
 %{
 t_eta_c = -R_eta_c*sin(theta_r_c(2))/Vr
 %}
@@ -38,7 +38,7 @@ Fa = alpha_os_a*Delta_f_dop;    % 方位向采样率
 Ta = 0.886*lambda*R_eta_c/(La*Vg*cos(theta_r_c(1)));
                                 % 目标照射时间
 Na = 2*ceil(Fa*Ta/2);           % 方位采样点数
-R0 = R_eta_c*cos(theta_r_c(1)); % 最短斜距
+R0 = R_eta_c*cos(theta_r_c(1)); % 景中心最短斜距
 Ka = 2*Vr^2*cos(theta_r_c(1))^2/lambda/R0;              
                                 % 方位向调频率
 theta_bw = 0.886*lambda/La;     % 方位向3dB波束宽度
@@ -118,7 +118,7 @@ for i = 1 : Ntarget
     waitbar(i/Ntarget,wait_title,Display_Str)
   
 end
-%  绘图
+%% 绘图
 H1 = figure();
 set(H1,'position',[100,100,600,600]);                    
 subplot(221),imagesc( real(srt))             

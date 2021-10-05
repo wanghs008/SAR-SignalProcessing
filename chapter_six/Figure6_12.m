@@ -25,7 +25,7 @@ theta_r_c = +3.5*pi/180;        % 波束斜视角
 %  计算参数--》方位向参数
 lambda = c/f0;                  % 雷达工作波长
 t_eta_c = -R_eta_c*sin(theta_r_c)/Vr;
-                                % 波束中心穿越时刻
+                                % 景中心波束中心穿越时刻
 f_eta_c = 2*Vr*sin(theta_r_c)/lambda;
                                 % 多普勒中心频率
 La = 0.886*2*Vs*cos(theta_r_c)/Delta_f_dop;               
@@ -33,9 +33,7 @@ La = 0.886*2*Vs*cos(theta_r_c)/Delta_f_dop;
 Fa = alpha_os_a*Delta_f_dop;    % 方位向采样率
 Ta = 0.886*lambda*R_eta_c/(La*Vg*cos(theta_r_c));
                                 % 目标照射时间
-R0 = R_eta_c*cos(theta_r_c);    % 最短斜距
-Ka = 2*Vr^2*cos(theta_r_c)^2/lambda/R0;              
-                                % 方位向调频率
+R0 = R_eta_c*cos(theta_r_c);    % 景中心最短斜距
 theta_bw = 0.886*lambda/La;     % 方位向3dB波束宽度
 %  参数计算
 rho_r = c/(2*Fr);               % 距离向分辨率
@@ -146,7 +144,7 @@ Window_2 = fftshift(window_2);                          % 频域窗
 hrt_2 = (abs(ttau)<=Tr/2).*exp(+1j*pi*Kr*ttau.^2);      % 复制脉冲
 hrt_window_2 = Window_2.*hrt_2;                         % 加窗
 Hrf_2 = repmat(conj(fft(hrt_window_2,Nrg,2)),[Naz,1]);                   
-%  信号变换-->方式三：根据脉冲频谱特性直接在频域生成品与匹配滤波器
+%  信号变换-->方式三：根据脉冲频谱特性直接在频域生成频域匹配滤波器
 %  加窗函数
 window_3 = kaiser(Nrg,2.5)';                            % 时域窗
 Window_3 = fftshift(window_3);                          % 频域窗
@@ -166,7 +164,7 @@ Srdf_3 = fft(soutt_3,Naz,1);
 %% 信号设置--》距离徙动校正
 RCM = lambda^2*r_tauX.*f_etaY.^2/(8*Vr^2);              % 需要校正的距离徙动量
 RCM = RCM - (R_eta_c - R0);                             % 将距离徙动量转换到原图像坐标系中
-RCM = RCM/rho_r;                                        % 将距离徙动量转换为距离单元偏移量
+offset = RCM/rho_r;                                     % 将距离徙动量转换为距离单元偏移量
 %  计算插值系数表
 x_tmp = repmat(-4:3,[16,1]);                            % 插值长度                          
 x_tmp = x_tmp + repmat(((1:16)/16).',[1,8]);            % 量化位移
@@ -174,35 +172,35 @@ hx = sinc(x_tmp);                                       % 生成插值核
 kwin = repmat(kaiser(8,2.5).',[16,1]);                  % 加窗
 hx = kwin.*hx;
 hx = hx./repmat(sum(hx,2),[1,8]);                       % 核的归一化
-%  插值校正
+%  插值表校正
 tic
 wait_title = waitbar(0,'开始进行距离徙动校正 ...');  
 pause(1);
 Srdf_rcm_1 = zeros(Naz,Nrg);
 Srdf_rcm_2 = zeros(Naz,Nrg);
 Srdf_rcm_3 = zeros(Naz,Nrg);
-for i = 1 : Naz
-    for j = 1 : Nrg
-        offset_int = ceil(RCM(i,j));
-        offset_frac = round((offset_int - RCM(i,j)) * 16);
+for a_tmp = 1 : Naz
+    for r_tmp = 1 : Nrg
+        offset_ceil = ceil(offset(a_tmp,r_tmp));
+        offset_frac = round((offset_ceil - offset(a_tmp,r_tmp)) * 16);
         if offset_frac == 0
-           Srdf_rcm_1(i,j) = Srdf_1(i,ceil(mod(j+offset_int-0.1,Nrg))); 
-           Srdf_rcm_2(i,j) = Srdf_2(i,ceil(mod(j+offset_int-0.1,Nrg))); 
-           Srdf_rcm_3(i,j) = Srdf_3(i,ceil(mod(j+offset_int-0.1,Nrg)));
+           Srdf_rcm_1(a_tmp,r_tmp) = Srdf_1(a_tmp,ceil(mod(r_tmp+offset_ceil-0.1,Nrg))); 
+           Srdf_rcm_2(a_tmp,r_tmp) = Srdf_2(a_tmp,ceil(mod(r_tmp+offset_ceil-0.1,Nrg))); 
+           Srdf_rcm_3(a_tmp,r_tmp) = Srdf_3(a_tmp,ceil(mod(r_tmp+offset_ceil-0.1,Nrg))); 
         else
-           Srdf_rcm_1(i,j) = Srdf_1(i,ceil(mod((j+offset_int-4:j+offset_int+3)-0.1,Nrg)))*hx(offset_frac,:).';
-           Srdf_rcm_2(i,j) = Srdf_2(i,ceil(mod((j+offset_int-4:j+offset_int+3)-0.1,Nrg)))*hx(offset_frac,:).';
-           Srdf_rcm_3(i,j) = Srdf_3(i,ceil(mod((j+offset_int-4:j+offset_int+3)-0.1,Nrg)))*hx(offset_frac,:).';
+           Srdf_rcm_1(a_tmp,r_tmp) = Srdf_1(a_tmp,ceil(mod((r_tmp+offset_ceil-4:r_tmp+offset_ceil+3)-0.1,Nrg)))*hx(offset_frac,:).';
+           Srdf_rcm_2(a_tmp,r_tmp) = Srdf_2(a_tmp,ceil(mod((r_tmp+offset_ceil-4:r_tmp+offset_ceil+3)-0.1,Nrg)))*hx(offset_frac,:).';
+           Srdf_rcm_3(a_tmp,r_tmp) = Srdf_3(a_tmp,ceil(mod((r_tmp+offset_ceil-4:r_tmp+offset_ceil+3)-0.1,Nrg)))*hx(offset_frac,:).';
         end
     end
     
     pause(0.001);
     Time_Trans   = Time_Transform(toc);
     Time_Disp    = Time_Display(Time_Trans);
-    Display_Data = num2str(roundn(i/Naz*100,-1));
+    Display_Data = num2str(roundn(a_tmp/Naz*100,-1));
     Display_Str  = ['Computation Progress ... ',Display_Data,'%',' --- ',...
                     'Using Time: ',Time_Disp];
-    waitbar(i/Naz,wait_title,Display_Str)
+    waitbar(a_tmp/Naz,wait_title,Display_Str)
            
 end
 pause(1);
@@ -210,17 +208,18 @@ close(wait_title);
 toc
 %% 信号设置--》方位压缩
 %  变量设置
-Ka = 2*Vr^2*cos(theta_r_c)^2/lambda./r_tauX; 
+Ka = 2*Vr^2/lambda./r_tauX; 
 %  计算滤波器
 Haf = exp(-1j*pi*f_etaY.^2./Ka);
+Haf_offset = exp(-1j*2*pi*f_etaY.*t_eta_c);
 %  匹配滤波
-Soutf_1 = Srdf_rcm_1.*Haf;
+Soutf_1 = Srdf_rcm_1.*Haf.*Haf_offset;
 soutt_1 = ifft(Soutf_1,Naz,1);
-Soutf_2 = Srdf_rcm_2.*Haf;
+Soutf_2 = Srdf_rcm_2.*Haf.*Haf_offset;
 soutt_2 = ifft(Soutf_2,Naz,1);
-Soutf_3 = Srdf_rcm_3.*Haf;
+Soutf_3 = Srdf_rcm_3.*Haf.*Haf_offset;
 soutt_3 = ifft(Soutf_3,Naz,1);
-%  绘图
+%% 绘图
 H1 = figure();
 set(H1,'position',[100,100,600,900]); 
 subplot(321),imagesc(real(soutt_1))
