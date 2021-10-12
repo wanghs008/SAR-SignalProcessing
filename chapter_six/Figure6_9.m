@@ -131,7 +131,7 @@ end
 pause(1);
 close(wait_title);
 toc
-%% 信号设置--》一次距离压缩
+%% 信号设置--》距离压缩
 %  变量设置
 dt = Tr/Nr;                                             % 脉冲时间间隔
 ttau = -Tr/2:dt:Tr/2-dt;                                % 脉冲时间变量
@@ -233,4 +233,4 @@ xlabel('距离时间(采样点)→'),ylabel('方位频率(采样点)→'),title('(a)实部')
 subplot(326),imagesc( abs(Srdf_rcm_3)),set(gca,'YDir','normal')
 %  axis([0 Naz,0 Nrg])
 xlabel('距离时间(采样点)→'),ylabel('方位频率(采样点)→'),title('(b)幅度')
-sgtitle('图6.9 距离徙动校正后的仿真数据','Fontsize',16,'color','k')
+sgtitle('图6.9 距离徙动校正后的仿真结果','Fontsize',16,'color','k')

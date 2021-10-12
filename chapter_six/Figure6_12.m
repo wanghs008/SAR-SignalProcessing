@@ -46,10 +46,10 @@ d_f_tau = Fr/Nrg;               % 距离采样频率间隔
 d_f_eta = Fa/Naz;               % 方位采样频率间隔
 %% 目标设置
 %  设置目标点相对于景中心之间的距离
-A_r =   0; A_a =   0;                                   % A点位置
-B_r = -50; B_a = -50;                                   % B点位置
-C_r = -50; C_a = +50;                                   % C点位置
-D_r = +50; D_a = C_a + (D_r-C_r)*tan(theta_r_c);        % D点位置
+A_r =    0;  A_a =   0;                                 % A点位置
+B_r = -200; B_a = -160;                                 % B点位置
+C_r = -200; C_a = +120;                                 % C点位置
+D_r = +200; D_a = C_a + (D_r-C_r)*tan(theta_r_c);       % D点位置
 %  得到目标点相对于景中心的位置坐标
 A_x = R0 + A_r; A_Y = A_a;                              % A点坐标
 B_x = R0 + B_r; B_Y = B_a;                              % B点坐标
@@ -208,7 +208,7 @@ close(wait_title);
 toc
 %% 信号设置--》方位压缩
 %  变量设置
-Ka = 2*Vr^2/lambda./r_tauX; 
+Ka = 2*Vr^2*cos(theta_r_c)^2./(lambda*r_tauX); 
 %  计算滤波器
 Haf = exp(-1j*pi*f_etaY.^2./Ka);
 Haf_offset = exp(-1j*2*pi*f_etaY.*t_eta_c);
