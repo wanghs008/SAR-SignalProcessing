@@ -50,10 +50,10 @@ d_f_tau = Fr/Nrg;               % ¾àÀë²ÉÑùÆµÂÊ¼ä¸ô
 d_f_eta = Fa/Naz;               % ·½Î»²ÉÑùÆµÂÊ¼ä¸ô
 %% Ä¿±êÉèÖÃ
 %  ÉèÖÃÄ¿±êµãÏà¶ÔÓÚ¾°ÖĞĞÄÖ®¼äµÄ¾àÀë
-A_r =    0;  A_a =   0;                                 % AµãÎ»ÖÃ
-B_r = -150; B_a = -180;                                 % BµãÎ»ÖÃ
-C_r = -100; C_a =  +80;                                 % CµãÎ»ÖÃ
-D_r = +100; D_a = C_a + (D_r-C_r)*tan(theta_r_c);       % DµãÎ»ÖÃ
+A_r =   0; A_a =   0;                                   % AµãÎ»ÖÃ
+B_r = -50; B_a = -50;                                   % BµãÎ»ÖÃ
+C_r = -50; C_a = +50;                                   % CµãÎ»ÖÃ
+D_r = +50; D_a = C_a + (D_r-C_r)*tan(theta_r_c);        % DµãÎ»ÖÃ
 %  µÃµ½Ä¿±êµãÏà¶ÔÓÚ¾°ÖĞĞÄµÄÎ»ÖÃ×ø±ê
 A_x = R0 + A_r; A_Y = A_a;                              % Aµã×ø±ê
 B_x = R0 + B_r; B_Y = B_a;                              % Bµã×ø±ê
@@ -82,15 +82,15 @@ end
 %% ±äÁ¿ÉèÖÃ
 %  Ê±¼ä±äÁ¿ ÒÔ¾°ÖĞĞÄµÄÁã¶àÆÕÀÕÊ±¿Ì×÷Îª·½Î»ÏòÁãµã
 t_tau = (-Trg/2:d_t_tau:Trg/2-d_t_tau) + 2*R_eta_c/c;   % ¾àÀëÊ±¼ä±äÁ¿
-t_eta = (-Taz/2:d_t_eta:Taz/2-d_t_eta) + t_eta_c(1);    % ·½Î»Ê±¼ä±äÁ¿
+t_eta = (-Taz/2:d_t_eta:Taz/2-d_t_eta) + t_eta_c;       % ·½Î»Ê±¼ä±äÁ¿
 %  ³¤¶È±äÁ¿
-r_tau = (t_tau*c/2)*cos(theta_r_c);                     % ¾àÀë³¤¶È±äÁ¿                                                    
+r_tau = (t_tau*c/2)*cos(theta_r_c);                     % ¾àÀë³¤¶È±äÁ¿                                                     
 %  ÆµÂÊ±äÁ¿ 
 f_tau = fftshift(-Fr/2:d_f_tau:Fr/2-d_f_tau);           % ¾àÀëÆµÂÊ±äÁ¿
 f_tau = f_tau - round((f_tau-0)/Fr)*Fr;                 % ¾àÀëÆµÂÊ±äÁ¿(¿É¹Û²âÆµÂÊ)                          
 f_eta = fftshift(-Fa/2:d_f_eta:Fa/2-d_f_eta);           % ·½Î»ÆµÂÊ±äÁ¿
-f_eta = f_eta - round((f_eta-f_eta_c(1))/Fa)*Fa;        % ·½Î»ÆµÂÊ±äÁ¿(¿É¹Û²âÆµÂÊ)
-%% ×ø±êÉèÖÃ   
+f_eta = f_eta - round((f_eta-f_eta_c)/Fa)*Fa;           % ·½Î»ÆµÂÊ±äÁ¿(¿É¹Û²âÆµÂÊ)
+%% ×ø±êÉèÖÃ  
 %  ÒÔ¾àÀëÊ±¼äÎªXÖá£¬·½Î»Ê±¼äÎªYÖá
 [t_tauX,t_etaY] = meshgrid(t_tau,t_eta);                % ÉèÖÃ¾àÀëÊ±Óò-·½Î»Ê±Óò¶şÎ¬ÍøÂç×ø±ê
 %  ÒÔ¾àÀë³¤¶ÈÎªXÖá£¬·½Î»ÆµÂÊÎªYÖá                                                                                                            
@@ -101,39 +101,42 @@ f_eta = f_eta - round((f_eta-f_eta_c(1))/Fa)*Fa;        % ·½Î»ÆµÂÊ±äÁ¿(¿É¹Û²âÆµÂ
 tic
 wait_title = waitbar(0,'¿ªÊ¼Éú³ÉÀ×´ïÔ­Ê¼»Ø²¨Êı¾İ ...');  
 pause(1);
-srt = zeros(Naz,Nrg);
+st_tt = zeros(Naz,Nrg);
 for i = 1 : Ntarget
     %  ¼ÆËãÄ¿±êµãµÄË²Ê±Ğ±¾à
     R_eta = sqrt( NPosition(i,1)^2 +...
                   Vr^2*(t_etaY-Tar_t_eta_0(i)).^2 ); 
+    %{
+    R_eta = NPosition(i,1) + Vr^2*t_etaY.^2/(2*NPosition(i,1));   
+    %}
+    %  ºóÏòÉ¢ÉäÏµÊı·ù¶È
     A0 = [1,1,1,1]*exp(+1j*0);   
+    %  ¾àÀëÏò°üÂç
     wr = (abs(t_tauX-2*R_eta/c) <= Tr/2);                               
+    %  ·½Î»Ïò°üÂç
     wa = sinc(0.886*atan(Vg*(t_etaY-Tar_t_eta_c(i))/NPosition(i,1))/theta_bw).^2;      
-    srt_tar = A0(i)*wr.*wa.*exp(-1j*4*pi*f0*R_eta/c)...
-                          .*exp(+1j*pi*Kr*(t_tauX-2*R_eta/c).^2);                                                        
-    srt = srt + srt_tar;  
-    
-    pause(0.001);
-    Time_Trans   = Time_Transform(toc);
-    Time_Disp    = Time_Display(Time_Trans);
-    Display_Data = num2str(roundn(i/Ntarget*100,-1));
-    Display_Str  = ['Computation Progress ... ',Display_Data,'%',' --- ',...
-                    'Using Time: ',Time_Disp];
-    waitbar(i/Ntarget,wait_title,Display_Str)
-    
+    %  ½ÓÊÕĞÅºÅµş¼Ó
+    st_tt_tar = A0(i)*wr.*wa.*exp(-1j*4*pi*f0*R_eta/c)...
+                            .*exp(+1j*pi*Kr*(t_tauX-2*R_eta/c).^2); 
+    %{
+    srt_tt_tar = A0(i)*wr.*wa.*exp(-1j*4*pi*R0/lambda)...
+                             .*exp(-1j*pi*Ka*t_eta_Y.^2)...
+                             .*exp(+1j*pi*Kr*(t_tauX-2*R_eta/c).^2);
+    %}                                                          
+    st_tt = st_tt + st_tt_tar;  
 end
+%%  »æÍ¼
+H = figure();
+set(H,'position',[100,100,600,600]);                    
+subplot(221),imagesc( real(st_tt))             
+xlabel('¾àÀëÊ±¼ä(²ÉÑùµã)¡ú'),ylabel('¡û·½Î»Ê±¼ä(²ÉÑùµã)'),title('(a)Êµ²¿')
+subplot(222),imagesc( imag(st_tt))
+xlabel('¾àÀëÊ±¼ä(²ÉÑùµã)¡ú'),ylabel('¡û·½Î»Ê±¼ä(²ÉÑùµã)'),title('(b)Ğé²¿')
+subplot(223),imagesc(  abs(st_tt)) 
+xlabel('¾àÀëÊ±¼ä(²ÉÑùµã)¡ú'),ylabel('¡û·½Î»Ê±¼ä(²ÉÑùµã)'),title('(c)·ù¶È')
+subplot(224),imagesc(angle(st_tt))
+xlabel('¾àÀëÊ±¼ä(²ÉÑùµã)¡ú'),ylabel('¡û·½Î»Ê±¼ä(²ÉÑùµã)'),title('(d)ÏàÎ»')
+sgtitle('Í¼6.16 ´óĞ±ÊÓ½ÇÇé¿öÏÂ¶àµãÀ×´ïÔ­Ê¼·ÂÕæĞÅºÅ','Fontsize',16,'color','k')
 pause(1);
 close(wait_title);
 toc
-%%  »æÍ¼
-H1 = figure();
-set(H1,'position',[100,100,600,600]);                    
-subplot(221),imagesc( real(srt))             
-xlabel('¾àÀëÊ±¼ä(²ÉÑùµã)¡ú'),ylabel('¡û·½Î»Ê±¼ä(²ÉÑùµã)'),title('(a)Êµ²¿')
-subplot(222),imagesc( imag(srt))
-xlabel('¾àÀëÊ±¼ä(²ÉÑùµã)¡ú'),ylabel('¡û·½Î»Ê±¼ä(²ÉÑùµã)'),title('(b)Ğé²¿')
-subplot(223),imagesc(  abs(srt)) 
-xlabel('¾àÀëÊ±¼ä(²ÉÑùµã)¡ú'),ylabel('¡û·½Î»Ê±¼ä(²ÉÑùµã)'),title('(c)·ù¶È')
-subplot(224),imagesc(angle(srt))
-xlabel('¾àÀëÊ±¼ä(²ÉÑùµã)¡ú'),ylabel('¡û·½Î»Ê±¼ä(²ÉÑùµã)'),title('(d)ÏàÎ»')
-sgtitle('Í¼6.16 ´óĞ±ÊÓ½ÇÇé¿öÏÂ¶àµãÀ×´ïÔ­Ê¼·ÂÕæĞÅºÅ','Fontsize',16,'color','k')

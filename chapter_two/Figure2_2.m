@@ -3,8 +3,8 @@ close all
 clear all
 
 % 建立正方形矩阵
-M = 256;% 矩阵高度
-N2 = 256;% 矩阵宽度
+M = 256;    % 矩阵高度
+N2 = 256;   % 矩阵宽度
 S0 = zeros(M,N2);
 S0(M/8+1:M*7/8,N2/8+1:N2*7/8) = 1;
 
@@ -14,8 +14,8 @@ S0_ff = S0_ff./max(max(S0_ff));
 S0_ff = 20*log10(S0_ff+1e-4);
 
 % figure
-% imagesc(S0);colormap gray% 预定义的颜色图
-% axis off image% 不显示图中的坐标轴
+% imagesc(S0);colormap gray % 预定义的颜色图
+% axis off image                     % 不显示图中的坐标轴
 % % colormap parula
 % % colormap jet
 % % colormap hot

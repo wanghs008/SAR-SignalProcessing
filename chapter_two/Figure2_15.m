@@ -9,7 +9,7 @@ st = sin(pi*t)./(pi*t);
 
 figure
 p1 = plot(t,st,'k');hold on
-p2 = plot(t,st.*kaiser(length(t),2.5)','r-.');% kaiser窗加权
+p2 = plot(t,st.*kaiser(length(t),2.5)','r-.');  % kaiser窗加权
 title('Kaiser窗加权后的sinc函数，\beta=2.5'),xlabel('时间(采样点)'),ylabel('幅度')
 axis([-8 8,-0.4 1.2])
 grid on

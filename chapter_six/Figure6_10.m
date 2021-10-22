@@ -148,13 +148,89 @@ Srf_tf = Sf_ft.*Hrf;
 srt_tt = ifft(Srf_tf,Nrg,2);
 %% 信号设置--》方位向傅里叶变换
 Saf_tf = fft(srt_tt,Naz,1);
+%% 信号设置--》距离徙动校正
+RCM = lambda^2*r_tauX.*f_etaY.^2/(8*Vr^2);              % 需要校正的距离徙动量
+RCM = R0 + RCM - R_eta_c;                               % 将距离徙动量转换到原图像坐标系中
+offset = RCM/rho_r;                                     % 将距离徙动量转换为距离单元偏移量
+%  计算插值系数表
+x_tmp = repmat(-4:3,[16,1]);                            % 插值长度                          
+x_tmp = x_tmp + repmat(((1:16)/16).',[1,8]);            % 量化位移
+hx = sinc(x_tmp);                                       % 生成插值核
+kwin = repmat(kaiser(8,2.5).',[16,1]);                  % 加窗
+hx = kwin.*hx;
+hx = hx./repmat(sum(hx,2),[1,8]);                       % 核的归一化
+%  插值表校正
+tic
+wait_title = waitbar(0,'开始进行距离徙动校正 ...');  
+pause(1);
+Srcmf_tf = zeros(Naz,Nrg);
+for a_tmp = 1 : Naz
+    for r_tmp = 1 : Nrg
+        offset_ceil = ceil(offset(a_tmp,r_tmp));
+        offset_frac = round((offset_ceil - offset(a_tmp,r_tmp)) * 16);
+        if offset_frac == 0
+           Srcmf_tf(a_tmp,r_tmp) = Saf_tf(a_tmp,ceil(mod(r_tmp+offset_ceil-0.1,Nrg))); 
+        else
+           Srcmf_tf(a_tmp,r_tmp) = Saf_tf(a_tmp,ceil(mod((r_tmp+offset_ceil-4:r_tmp+offset_ceil+3)-0.1,Nrg)))*hx(offset_frac,:).';
+        end
+    end
+    
+    pause(0.001);
+    Time_Trans   = Time_Transform(toc);
+    Time_Disp    = Time_Display(Time_Trans);
+    Display_Data = num2str(roundn(a_tmp/Naz*100,-1));
+    Display_Str  = ['Computation Progress ... ',Display_Data,'%',' --- ',...
+                    'Using Time: ',Time_Disp];
+    waitbar(a_tmp/Naz,wait_title,Display_Str)
+end
+pause(1);
+close(wait_title);
+toc
+%% 信号设置--》方位压缩
+%  变量设置
+Ka = 2*Vr^2*cos(theta_r_c)^2./(lambda*r_tauX); 
+%  计算滤波器
+Haf = exp(-1j*pi*f_etaY.^2./Ka);
+Haf_offset = exp(-1j*2*pi*f_etaY.*t_eta_c);
+%  匹配滤波
+Soutf_tf = Srcmf_tf.*Haf.*Haf_offset;
+soutt_tt = ifft(Soutf_tf,Naz,1);
+% %% 绘图
+% H1 = figure();
+% set(H1,'position',[100,100,600,300]); 
+% subplot(121),imagesc(real(soutt_tt))
+% %  axis([0 Naz,0 Nrg])
+% xlabel('距离时间(采样点)→'),ylabel('←方位时间(采样点)'),title('(a)实部')
+% subplot(122),imagesc( abs(soutt_tt))
+% %  axis([0 Naz,0 Nrg])
+% xlabel('距离时间(采样点)→'),ylabel('←方位时间(采样点)'),title('(b)幅度')
+% sgtitle('图6.12 方位压缩后的仿真结果','Fontsize',16,'color','k')
+%% 信号设置--》点目标分析
+%  方位向切片
+len_az = 16;
+cut_az = -len_az/2:len_az/2-1;
+Srcmf_tt = ifft(Srcmf_tf);
+Srcmf_az_tt = Srcmf_tt(:,round(Nrg/2 + 1 + 2*(NPosition(1,1)-R0)/c*Fr)).';
+%  距离向切片
+len_rg = 16;
+cut_rg = -len_rg/2:len_rg/2-1;
+Srcmf_rg_tf = Srcmf_tf(round(Naz/2 + 1 + NPosition(1,2)/Vr*Fa),...
+                       round(Nrg/2 + 1 + 2*(NPosition(1,1)-R0)/c*Fr) + cut_rg);
+Numr = 512;
+%  通过频域补零方式进行升采样
+% Srcmf_rg_ff = fft(Srcmf_rg_tf);        
+% Srcmf_rg_zero_ff = zeros(1,Numr);
+% Srcmf_rg_zero_ff(Numr/2 + 1 + cut_rg) = fftshift(Srcmf_rg_ff);
+% Srcmf_rg_zero_tf = ifft(ifftshift(Srcmf_rg_zero_ff));
+%  通过interpft函数进行升采样
+Srcmf_rg_zero_tf = interpft(Srcmf_rg_tf,Numr);
 %% 绘图
-H = figure();
-set(H ,'position',[100,100,600,300]); 
-subplot(121),imagesc(real(Saf_tf)),set(gca,'YDir','normal')
-%  axis([0 Naz,0 Nrg])
-xlabel('距离时间(采样点)→'),ylabel('方位频率(采样点)→'),title('(a)实部')
-subplot(122),imagesc( abs(Saf_tf)),set(gca,'YDir','normal')
-%  axis([0 Naz,0 Nrg])
-xlabel('距离时间(采样点)→'),ylabel('方位频率(采样点)→'),title('(b)幅度')
-sgtitle('图6.5 方位向快速傅里叶变换后的仿真结果','Fontsize',16,'color','k')
+H2 = figure();
+set(H2,'position',[100,100,600,300]); 
+subplot(121),plot(0:16/Numr:16-16/Numr,angle(Srcmf_rg_zero_tf))
+axis([0 16,-4 4])
+xlabel('距离向(采样点)'),ylabel('相位(弧度)'),title('(a)距离剖面相位')
+subplot(122),plot(unwrap(angle(Srcmf_az_tt)))
+axis([0 Naz,-150 80])
+xlabel('方位向(采样点)'),ylabel('相位(弧度)'),title('(b)解绕后的方位剖面相位')
+sgtitle('图6.10 距离徙动校正后点目标的方位和距离相位','Fontsize',16,'color','k')

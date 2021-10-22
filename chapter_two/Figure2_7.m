@@ -34,11 +34,11 @@ dt2 = 1/fs2; % 定义采样间隔
 
 t2 = 0:dt2:T;
 
-A2 = sin(2*pi*F*t2); % 采样信号
+A2 = sin(2*pi*F*t2);    % 采样信号
 
 cs2 = spline(t2,A2);
-xx2 = linspace(t2(1),t2(end),1000); % 插值点
-yy2 = ppval(cs2,xx2); % 插值
+xx2 = linspace(t2(1),t2(end),1000);     % 插值点
+yy2 = ppval(cs2,xx2);   % 插值
 
 % plot(t2,A2,'bh'),hold on
 % plot(xx2,yy2,'b'),hold on

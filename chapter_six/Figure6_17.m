@@ -50,10 +50,10 @@ d_f_tau = Fr/Nrg;               % 距离采样频率间隔
 d_f_eta = Fa/Naz;               % 方位采样频率间隔
 %% 目标设置
 %  设置目标点相对于景中心之间的距离
-A_r =    0;  A_a =   0;                                 % A点位置
-B_r = -150; B_a = -180;                                 % B点位置
-C_r = -100; C_a =  +80;                                 % C点位置
-D_r = +100; D_a = C_a + (D_r-C_r)*tan(theta_r_c);       % D点位置
+A_r =   0; A_a =   0;                                   % A点位置
+B_r = -50; B_a = -50;                                   % B点位置
+C_r = -50; C_a = +50;                                   % C点位置
+D_r = +50; D_a = C_a + (D_r-C_r)*tan(theta_r_c);        % D点位置
 %  得到目标点相对于景中心的位置坐标
 A_x = R0 + A_r; A_Y = A_a;                              % A点坐标
 B_x = R0 + B_r; B_Y = B_a;                              % B点坐标
@@ -82,36 +82,48 @@ end
 %% 变量设置
 %  时间变量 以景中心的零多普勒时刻作为方位向零点
 t_tau = (-Trg/2:d_t_tau:Trg/2-d_t_tau) + 2*R_eta_c/c;   % 距离时间变量
-t_eta = (-Taz/2:d_t_eta:Taz/2-d_t_eta) + t_eta_c(1);    % 方位时间变量
+t_eta = (-Taz/2:d_t_eta:Taz/2-d_t_eta) + t_eta_c;       % 方位时间变量
 %  长度变量
-r_tau = (t_tau*c/2)*cos(theta_r_c);                     % 距离长度变量                                                    
+r_tau = (t_tau*c/2)*cos(theta_r_c);                     % 距离长度变量                                                     
 %  频率变量 
 f_tau = fftshift(-Fr/2:d_f_tau:Fr/2-d_f_tau);           % 距离频率变量
 f_tau = f_tau - round((f_tau-0)/Fr)*Fr;                 % 距离频率变量(可观测频率)                          
 f_eta = fftshift(-Fa/2:d_f_eta:Fa/2-d_f_eta);           % 方位频率变量
-f_eta = f_eta - round((f_eta-f_eta_c(1))/Fa)*Fa;        % 方位频率变量(可观测频率)
-%% 坐标设置   
+f_eta = f_eta - round((f_eta-f_eta_c)/Fa)*Fa;         	% 方位频率变量(可观测频率)
+%% 坐标设置  
 %  以距离时间为X轴，方位时间为Y轴
 [t_tauX,t_etaY] = meshgrid(t_tau,t_eta);                % 设置距离时域-方位时域二维网络坐标
 %  以距离长度为X轴，方位频率为Y轴                                                                                                            
 [r_tauX,f_etaY] = meshgrid(r_tau,f_eta);                % 设置距离时域-方位频域二维网络坐标
 %  以距离频率为X轴，方位频率为Y轴                                                                                                            
 [f_tau_X,f_eta_Y] = meshgrid(f_tau,f_eta);              % 设置频率时域-方位频域二维网络坐标
-%% 信号设置--》原始回波信号  
+%% 信号设置--》原始回波信号                                                        
 tic
 wait_title = waitbar(0,'开始生成雷达原始回波数据 ...');  
 pause(1);
-srt = zeros(Naz,Nrg);
+st_tt = zeros(Naz,Nrg);
 for i = 1 : Ntarget
     %  计算目标点的瞬时斜距
     R_eta = sqrt( NPosition(i,1)^2 +...
                   Vr^2*(t_etaY-Tar_t_eta_0(i)).^2 ); 
+    %{
+    R_eta = NPosition(i,1) + Vr^2*t_etaY.^2/(2*NPosition(i,1));   
+    %}
+    %  后向散射系数幅度
     A0 = [1,1,1,1]*exp(+1j*0);   
+    %  距离向包络
     wr = (abs(t_tauX-2*R_eta/c) <= Tr/2);                               
+    %  方位向包络
     wa = sinc(0.886*atan(Vg*(t_etaY-Tar_t_eta_c(i))/NPosition(i,1))/theta_bw).^2;      
-    srt_tar = A0(i)*wr.*wa.*exp(-1j*4*pi*f0*R_eta/c)...
-                          .*exp(+1j*pi*Kr*(t_tauX-2*R_eta/c).^2);                                                        
-    srt = srt + srt_tar;  
+    %  接收信号叠加
+    st_tt_tar = A0(i)*wr.*wa.*exp(-1j*4*pi*f0*R_eta/c)...
+                            .*exp(+1j*pi*Kr*(t_tauX-2*R_eta/c).^2); 
+    %{
+    srt_tt_tar = A0(i)*wr.*wa.*exp(-1j*4*pi*R0/lambda)...
+                             .*exp(-1j*pi*Ka*t_eta_Y.^2)...
+                             .*exp(+1j*pi*Kr*(t_tauX-2*R_eta/c).^2);
+    %}                                                          
+    st_tt = st_tt + st_tt_tar;  
     
     pause(0.001);
     Time_Trans   = Time_Transform(toc);
@@ -120,28 +132,27 @@ for i = 1 : Ntarget
     Display_Str  = ['Computation Progress ... ',Display_Data,'%',' --- ',...
                     'Using Time: ',Time_Disp];
     waitbar(i/Ntarget,wait_title,Display_Str)
-    
 end
 pause(1);
 close(wait_title);
 toc
-%% 信号设置--》一次距离压缩
+%% 信号设置--》距离压缩
+%  一次距离压缩
 window = kaiser(Nrg,2.5)';                              % 时域窗
 Window = fftshift(window);                              % 频域窗
+%  计算滤波器
 Hrf = Window.*exp(+1j*pi*f_tau_X.^2/Kr);  
-%% 信号设置--》二次距离压缩，通过方式三实现(因为对R0和f_etaY为弱相关，所以这里假定与他们无关)
+%  二次距离压缩
 Drd0 = sqrt(1-lambda^2*f_eta_c^2/(4*Vr^2));             % 距离多普勒域中的徙动因子
 Ksrc = 2*Vr^2*f0^3*Drd0/(c*R0*f_eta_c^2);               % 距离补偿调频率
+%  计算滤波器
 Hsrcf = exp(-1j*pi*f_tau_X.^2/Ksrc);  
-%% 信号设置--》一次距离压缩和二次距离压缩的合并操作
-Km = Kr*Ksrc/(Ksrc-Kr);                                 % 距离合并调频率
-Hmf = Window.*exp(+1j*pi*f_tau_X.^2/Km);
 %  匹配滤波
-Srf = fft(srt,Nrg,2);
-Soutrf = Srf.*Hmf;
-soutrt = ifft(Soutrf,Nrg,2);
+Sf_ft = fft(st_tt,Nrg,2);
+Srf_ft_33 = Sf_ft.*Hrf.*Hsrcf;
+srt_tt_33 = ifft(Srf_ft_33,Nrg,2);
 %% 信号设置--》方位向傅里叶变换
-Srdf = fft(soutrt,Naz,1);
+Saf_tf = fft(srt_tt_33,Naz,1);
 %% 信号设置--》距离徙动校正
 Drd = sqrt(1-lambda^2*f_etaY.^2/(4*Vr^2));              % 距离多普勒域中的徙动因子
 RCM = r_tauX./Drd-r_tauX;                               % 需要校正的距离徙动量
@@ -158,15 +169,15 @@ hx = hx./repmat(sum(hx,2),[1,8]);                       % 核的归一化
 tic
 wait_title = waitbar(0,'开始进行距离徙动校正 ...');  
 pause(1);
-Srdf_rcm = zeros(Naz,Nrg);
+Srcmf_tf = zeros(Naz,Nrg);
 for a_tmp = 1 : Naz
     for r_tmp = 1 : Nrg
         offset_ceil = ceil(offset(a_tmp,r_tmp));
         offset_frac = round((offset_ceil - offset(a_tmp,r_tmp)) * 16);
         if offset_frac == 0
-           Srdf_rcm(a_tmp,r_tmp) = Srdf(a_tmp,ceil(mod(r_tmp+offset_ceil-0.1,Nrg))); 
+           Srcmf_tf(a_tmp,r_tmp) = Saf_tf(a_tmp,ceil(mod(r_tmp+offset_ceil-0.1,Nrg))); 
         else
-           Srdf_rcm(a_tmp,r_tmp) = Srdf(a_tmp,ceil(mod((r_tmp+offset_ceil-4:r_tmp+offset_ceil+3)-0.1,Nrg)))*hx(offset_frac,:).';
+           Srcmf_tf(a_tmp,r_tmp) = Saf_tf(a_tmp,ceil(mod((r_tmp+offset_ceil-4:r_tmp+offset_ceil+3)-0.1,Nrg)))*hx(offset_frac,:).';
         end
     end
     
@@ -177,7 +188,6 @@ for a_tmp = 1 : Naz
     Display_Str  = ['Computation Progress ... ',Display_Data,'%',' --- ',...
                     'Using Time: ',Time_Disp];
     waitbar(a_tmp/Naz,wait_title,Display_Str)
-    
 end
 pause(1);
 close(wait_title);
@@ -185,23 +195,22 @@ toc
 %% 信号设置--》方位压缩
 %  计算滤波器
 Haf = exp(+1j*4*pi*f0*r_tauX.*Drd/c);
-H_offset = exp(-1j*2*pi*f_etaY.*t_eta_c);
+Haf_offset = exp(-1j*2*pi*f_etaY.*t_eta_c);
 %  匹配滤波
-Soutaf = Srdf_rcm.*Haf.*H_offset;
-soutat = ifft(Soutaf,Naz,1);
+Soutf_tf = Srcmf_tf.*Haf.*Haf_offset;
+soutt_tt = ifft(Soutf_tf,Naz,1);
 %% 绘图
-H1 = figure();
-set(H1,'position',[100,100,600,600]); 
-subplot(221),imagesc( abs(ifft(Srf.*Hrf,Nrg,2)))
+H = figure();
+set(H,'position',[100,100,600,600]); 
+subplot(221),imagesc( abs(ifft(Sf_ft.*Hrf,Nrg,2)))
 %  axis([0 Naz,0 Nrg])
 xlabel('距离向(采样点)→'),ylabel('←方位向(采样点)'),title('(a)一次距离压缩')
-subplot(222),imagesc( abs(ifft(Srf.*Hrf.*Hsrcf,Nrg,2)))
-%  axis([0 Naz,0 Nrg])
+subplot(222),imagesc( abs(ifft(Sf_ft.*Hrf.*Hsrcf,Nrg,2)))
 %  axis([0 Naz,0 Nrg])
 xlabel('距离向(采样点)→'),ylabel('方位频率(采样点)→'),title('(b)二次距离压缩')
-subplot(223),imagesc(  abs(Srdf)),set(gca,'YDir','normal')
+subplot(223),imagesc( abs(Saf_tf)),set(gca,'YDir','normal')
 %  axis([0 Naz,0 Nrg])
 xlabel('距离向(采样点)→'),ylabel('方位频率(采样点)→'),title('(c)方位向快速傅里叶变换后的数据')
-subplot(224),imagesc( abs(soutat))
-xlabel('距离向(采样点)→'),ylabel('←方位向(采样点)'),title('(d)RCMC和方为压缩后的数据')
+subplot(224),imagesc( abs(soutt_tt))
+xlabel('距离向(采样点)→'),ylabel('←方位向(采样点)'),title('(d)RCMC和方位压缩后的数据')
 sgtitle('图6.17 方式3下二次距离压缩的精确实现','Fontsize',16,'color','k')

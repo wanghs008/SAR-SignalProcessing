@@ -46,7 +46,7 @@ a = 4.7;
 
 %% 插值运算
 t = a-1:-1:a-8;
-gx_a = sinc(t)*gx';% 插值通过卷积来实现
+gx_a = sinc(t)*gx'; % 插值通过卷积来实现
 
 % A = figure();
 % plot(x2,gx,'ko','MarkerFaceColor','k'),hold on

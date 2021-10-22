@@ -31,7 +31,7 @@ for i = 1:1:5
     t1 = 0:dt:T-dt;
     
     At = t1+2;
-    At = At./max(max(At)); % 信号幅度修正
+    At = At./max(max(At));  % 信号幅度修正
     
     st = exp(1i*2*pi*(f0*t1+0.5*K*t1.^2)).*At;
     
