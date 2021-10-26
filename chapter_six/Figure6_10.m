@@ -195,27 +195,27 @@ Haf_offset = exp(-1j*2*pi*f_etaY.*t_eta_c);
 %  匹配滤波
 Soutf_tf = Srcmf_tf.*Haf.*Haf_offset;
 soutt_tt = ifft(Soutf_tf,Naz,1);
-% %% 绘图
-% H1 = figure();
-% set(H1,'position',[100,100,600,300]); 
-% subplot(121),imagesc(real(soutt_tt))
-% %  axis([0 Naz,0 Nrg])
-% xlabel('距离时间(采样点)→'),ylabel('←方位时间(采样点)'),title('(a)实部')
-% subplot(122),imagesc( abs(soutt_tt))
-% %  axis([0 Naz,0 Nrg])
-% xlabel('距离时间(采样点)→'),ylabel('←方位时间(采样点)'),title('(b)幅度')
-% sgtitle('图6.12 方位压缩后的仿真结果','Fontsize',16,'color','k')
+%% 绘图
+H1 = figure();
+set(H1,'position',[100,100,600,300]); 
+subplot(121),imagesc(real(soutt_tt))
+%  axis([0 Naz,0 Nrg])
+xlabel('距离时间(采样点)→'),ylabel('←方位时间(采样点)'),title('(a)实部')
+subplot(122),imagesc( abs(soutt_tt))
+%  axis([0 Naz,0 Nrg])
+xlabel('距离时间(采样点)→'),ylabel('←方位时间(采样点)'),title('(b)幅度')
+sgtitle('图6.12 方位压缩后的仿真结果','Fontsize',16,'color','k')
 %% 信号设置--》点目标分析
 %  方位向切片
 len_az = 16;
 cut_az = -len_az/2:len_az/2-1;
 Srcmf_tt = ifft(Srcmf_tf);
-Srcmf_az_tt = Srcmf_tt(:,round(Nrg/2 + 1 + 2*(NPosition(1,1)-R0)/c*Fr)).';
+Srcmf_az_tt = Srcmf_tt(:,round(Nrg/2 + 1 + 2*(NPosition(4,1)-R0)/c*Fr)).';
 %  距离向切片
 len_rg = 16;
 cut_rg = -len_rg/2:len_rg/2-1;
-Srcmf_rg_tf = Srcmf_tf(round(Naz/2 + 1 + NPosition(1,2)/Vr*Fa),...
-                       round(Nrg/2 + 1 + 2*(NPosition(1,1)-R0)/c*Fr) + cut_rg);
+Srcmf_rg_tf = Srcmf_tf(round(Naz/2 + 1 + NPosition(4,2)/Vr*Fa),...
+                       round(Nrg/2 + 1 + 2*(NPosition(4,1)-R0)/c*Fr) + cut_rg);
 Numr = 512;
 %  通过频域补零方式进行升采样
 % Srcmf_rg_ff = fft(Srcmf_rg_tf);        
@@ -231,6 +231,6 @@ subplot(121),plot(0:16/Numr:16-16/Numr,angle(Srcmf_rg_zero_tf))
 axis([0 16,-4 4])
 xlabel('距离向(采样点)'),ylabel('相位(弧度)'),title('(a)距离剖面相位')
 subplot(122),plot(unwrap(angle(Srcmf_az_tt)))
-axis([0 Naz,-150 80])
+axis([0 Naz,-250 80])
 xlabel('方位向(采样点)'),ylabel('相位(弧度)'),title('(b)解绕后的方位剖面相位')
 sgtitle('图6.10 距离徙动校正后点目标的方位和距离相位','Fontsize',16,'color','k')
