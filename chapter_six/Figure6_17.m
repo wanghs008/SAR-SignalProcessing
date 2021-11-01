@@ -144,7 +144,7 @@ Window = fftshift(window);                              % 频域窗
 Hrf = Window.*exp(+1j*pi*f_tau_X.^2/Kr);  
 %  二次距离压缩
 Drd0 = sqrt(1-lambda^2*f_eta_c^2/(4*Vr^2));             % 距离多普勒域中的徙动因子
-Ksrc = 2*Vr^2*f0^3*Drd0/(c*R0*f_eta_c^2);               % 距离补偿调频率
+Ksrc = 2*Vr^2*f0^3*Drd0^3/(c*R0*f_eta_c^2);             % 距离补偿调频率
 %  计算滤波器
 Hsrcf = exp(-1j*pi*f_tau_X.^2/Ksrc);  
 %  匹配滤波
